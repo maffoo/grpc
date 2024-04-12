@@ -38,7 +38,6 @@ class TestChannel(AioTestBase):
         await self._server.stop(None)
 
     async def test_use_aio_from_multiple_threads(self):
-        
         async def run_in_thread():
             unhandled_exceptions = []
 
@@ -47,7 +46,9 @@ class TestChannel(AioTestBase):
 
             asyncio.get_running_loop().set_exception_handler(record_exceptions)
 
-            async with grpc.aio.insecure_channel(self._server_target) as channel:
+            async with grpc.aio.insecure_channel(
+                self._server_target
+            ) as channel:
                 hi = channel.unary_unary(
                     _UNARY_CALL_METHOD,
                     request_serializer=messages_pb2.SimpleRequest.SerializeToString,
@@ -55,10 +56,12 @@ class TestChannel(AioTestBase):
                 )
                 for _ in range(_NUM_CALLS_IN_THREAD):
                     await hi(messages_pb2.SimpleRequest())
-            
+
             return unhandled_exceptions
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=_NUM_THREADS) as executor:
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=_NUM_THREADS
+        ) as executor:
             futures = []
             for _ in range(_NUM_THREADS):
                 futures.append(executor.submit(asyncio.run, run_in_thread()))
